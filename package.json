@@ -1,0 +1,22 @@
+{
+  "name": "paramtuner",
+  "version": "0.0.0",
+  "description": "easily parameter tuning in your code!",
+  "main": "tuner.js",
+  "scripts": {
+    "start": "coffee -bj tuner.js -c src/tuner.coffee && coffee -bj lib/configerror.js -c src/lib/configerror.coffee && coffee -bj lib/tuningwatcher.js -c src/lib/tuningwatcher.coffee && coffee -bj lib/strategy.js -c src/lib/strategy.coffee",
+    "test": "mocha --compilers coffee:coffee-script -R spec"
+  },
+  "repository": "",
+  "author": "Muddy Dixon muddydixon@gmail.com",
+  "license": "Apache License Version 2.0",
+  "readmeFilename": "README.md",
+  "dependencies": {
+    "d3": "~3.1.4"
+  },
+  "devDependencies": {
+    "mocha": "~1.8.2",
+    "chai": "~1.5.0",
+    "coffee-script": "~1.4.0"
+  }
+}
