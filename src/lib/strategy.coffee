@@ -11,7 +11,8 @@ class Strategy
       if dat.range?
         @params[name] = d3.scale.linear().range(dat.range)
       else
-        @params[name] = ()-> dat
+        do (dat)=>
+          @params[name] = ()-> dat
     
   getParamSet: ()->
     @t++

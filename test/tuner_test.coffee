@@ -129,3 +129,15 @@ describe 'Tuner', ->
           
       tuner.start()
       
+    it 'options constant params ', ->
+      tuner = new Tuner
+        command: (env, params, next)->
+          console.log params
+          next(null, 0.5)
+        params:
+          alpha: 0.1
+          beta:
+            range: [0, 1]
+        
+      tuner.start()
+
