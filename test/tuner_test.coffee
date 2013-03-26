@@ -13,7 +13,7 @@ opt =
   env: ()->
     ()->
       {}
-  begin: (next)->
+  before: (next)->
     next()
   command: (env, params, next)->
     next()
@@ -78,13 +78,13 @@ describe 'Tuner', ->
           
       tuner.start()
       
-    it 'take topic by begin', (done)->
+    it 'take topic by before', (done)->
       tuner = new Tuner
         command: (env, params, next)->
           expect(env.$topic.name).to.be.equal 'muddy'
           next(null, 0.5)
 
-        begin: (next)->
+        before: (next)->
           next null, {name: 'muddy'}
           
         done: (err, results, time)->
@@ -100,12 +100,12 @@ describe 'Tuner', ->
           
       tuner.start()
       
-    it 'take topic error by begin', (done)->
+    it 'take topic error by before', (done)->
       tuner = new Tuner
         command: (env, params, next)->
           next(null, 0.5)
 
-        begin: (next)->
+        before: (next)->
           next Error('topic error')
         done: (err, results, time)->
           expect(err).to.be.exist

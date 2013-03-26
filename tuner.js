@@ -23,7 +23,7 @@ module.exports = Tuner = (function() {
     this.env = (opt.env != null) && typeof opt.env === 'function' && typeof opt.env() === 'function' ? opt.env() : function() {
       return {};
     };
-    this.begin = (opt.begin != null) && typeof opt.begin === 'function' ? opt.begin : function(next) {
+    this.before = (opt.before != null) && typeof opt.before === 'function' ? opt.before : function(next) {
       return next(null, {});
     };
     this.trace = opt.trace || false;
@@ -55,7 +55,7 @@ module.exports = Tuner = (function() {
         end: new Date()
       });
     });
-    return this.begin(function(err, topic) {
+    return this.before(function(err, topic) {
       var trial;
       if (err != null) {
         return watcher.emit('error', err);

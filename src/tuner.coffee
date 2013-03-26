@@ -13,7 +13,7 @@ module.exports = class Tuner
     @command = opt.command
     @done = if opt.done? and typeof opt.done is 'function' then opt.done else @done
     @env = if opt.env? and typeof opt.env is 'function' and typeof opt.env() is 'function' then opt.env() else ()-> {}
-    @begin = if opt.begin? and typeof opt.begin is 'function' then opt.begin else (next)-> next(null, {})
+    @before = if opt.before? and typeof opt.before is 'function' then opt.before else (next)-> next(null, {})
 
     # values
     @trace = opt.trace or false
@@ -46,8 +46,8 @@ module.exports = class Tuner
       done(err, results, {begin: beginTime, end: new Date()})
     )
     
-    # begin
-    @begin (err, topic)=>
+    # before
+    @before (err, topic)=>
 
       if err?
         return watcher.emit 'error', err
