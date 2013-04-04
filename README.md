@@ -18,7 +18,7 @@ var tuner = new Tuner({command: function(env, params, next){
 tuner.start();
 ```
 
-# Example
+# Examples
 
 If you want to start server with best maxConnection number:
 
