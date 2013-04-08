@@ -49,13 +49,10 @@ describe 'Tuner', ->
         command: (env, params, next)->
           next(null, 1 / env.$trialCount / 2)
         done: (err, results, time)->
-          bestCase = null
-          bestCost = Infinity
-          for result in results
-            if result.cost < bestCost
-              bestCost = result.cost
-              bestCase = result
-          expect(bestCost).to.be.below(0.1)
+          expect(results).to.be.exist
+          expect(results.best).to.be.exist
+          expect(results.best.cost).to.be.below(0.1)
+          expect(results.best.params).to.be.expect
           done()
           
       tuner.start()
@@ -66,14 +63,8 @@ describe 'Tuner', ->
           next(null, 0.5)
           
         done: (err, results, time)->
-          bestCase = null
-          bestCost = Infinity
-          for result in results
-            if result.cost < bestCost
-              bestCost = result.cost
-              bestCase = result
-          expect(bestCost).not.to.be.below 0.1
-          expect(results.length).to.be.equal 10
+          expect(results.best.cost).not.to.be.below 0.1
+          expect(results.iteration.length).to.be.equal 10
           done()
           
       tuner.start()
@@ -88,14 +79,8 @@ describe 'Tuner', ->
           next null, {name: 'muddy'}
           
         done: (err, results, time)->
-          bestCase = null
-          bestCost = Infinity
-          for result in results
-            if result.cost < bestCost
-              bestCost = result.cost
-              bestCase = result
-          expect(bestCost).not.to.be.below 0.1
-          expect(results.length).to.be.equal 10
+          expect(results.best.cost).not.to.be.below 0.1
+          expect(results.iteration.length).to.be.equal 10
           done()
           
       tuner.start()
@@ -124,20 +109,36 @@ describe 'Tuner', ->
             {mycount: mycount++}
             
         done: (err, results, time)->
-          expect(results).have.length 10
+          expect(results.iteration).have.length 10
           done()
           
       tuner.start()
       
-    it 'options constant params ', ->
+    it 'options constant params ', (done)->
       tuner = new Tuner
         command: (env, params, next)->
-          console.log params
           next(null, 0.5)
         params:
           alpha: 0.1
           beta:
             range: [0, 1]
+        done: done
+        
+      tuner.start()
+
+    it 'options enum ', (done)->
+      tuner = new Tuner
+        command: (env, params, next)->
+          next(null, 0.5)
+        params:
+          alpha: 0.1
+          beta:
+            enum: [0, 1, 2, 3]
+        done: (err, results, time)->
+          results.iteration.forEach (d)->
+            expect([0, 1, 2, 3].indexOf(d.params.beta)).to.be.above -1 
+          done()
+          
         
       tuner.start()
 

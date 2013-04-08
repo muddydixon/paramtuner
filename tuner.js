@@ -49,8 +49,30 @@ module.exports = Tuner = (function() {
     strategy = this.strategy;
     trace = this.trace;
     isEndOfTrial = this.isEndOfTrial;
-    watcher = new TuningWatcher(this.maxTrialCount, this.targetCost, function(err, results) {
-      return done(err, results, {
+    watcher = new TuningWatcher(this.maxTrialCount, this.targetCost, function(err, iterationData) {
+      var bestCost, bestParams, iteration, _i, _len;
+      if (err != null) {
+        return done(err);
+      }
+      if (!(iterationData != null)) {
+        return done(Error('no iteration data'));
+      }
+      bestCost = Infinity;
+      bestParams = null;
+      for (_i = 0, _len = iterationData.length; _i < _len; _i++) {
+        iteration = iterationData[_i];
+        if (iteration.cost < bestCost) {
+          bestCost = iteration.cost;
+          bestParams = iteration.params;
+        }
+      }
+      return done(err, {
+        best: {
+          cost: bestCost,
+          params: bestParams
+        },
+        iteration: iterationData
+      }, {
         begin: beginTime,
         end: new Date()
       });

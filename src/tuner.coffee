@@ -42,8 +42,21 @@ module.exports = class Tuner
 
 
     # watcher start
-    watcher = new TuningWatcher(@maxTrialCount, @targetCost, (err, results)->
-      done(err, results, {begin: beginTime, end: new Date()})
+    watcher = new TuningWatcher(@maxTrialCount, @targetCost, (err, iterationData)->
+      if err?
+        return done(err)
+      if not iterationData?
+        return done Error('no iteration data')
+      
+      bestCost = Infinity
+      bestParams = null
+
+      for iteration in iterationData
+        if iteration.cost < bestCost
+          bestCost = iteration.cost
+          bestParams = iteration.params
+      
+      done(err, {best: {cost: bestCost, params: bestParams}, iteration: iterationData}, {begin: beginTime, end: new Date()})
     )
     
     # before

@@ -38,18 +38,22 @@ var tuner = new Tuner({
     next(null, timePerReq);
   },
   done: function(err, results, time){
-    var bestCost = Infinity;
-    var bestParams = null;
-    for(var i = 0; i < results.length; i++){
-      if(bestCost > results.cost){
-        bestCost = results.cost;
-        bestParams = results.params;
-      }
-    }
-    new Server(bestParams).listen(80);
+    new Server(results.best.params).listen(80);
   }
 });
 tuner.start();
 ```
 
+# Author
 
+Muddy Dixon muddydixon@gmail.com
+
+# License
+
+Copyright 2013- Muddy Dixon (muddydixon)
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.

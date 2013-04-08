@@ -10,6 +10,8 @@ class Strategy
     for name, dat of params
       if dat.range?
         @params[name] = d3.scale.linear().range(dat.range)
+      else if dat.enum?
+        @params[name] = ()-> dat.enum[0|Math.random() * dat.enum.length]
       else
         do (dat)=>
           @params[name] = ()-> dat
