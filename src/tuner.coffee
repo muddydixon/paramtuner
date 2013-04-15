@@ -1,92 +1,161 @@
 d3 = require 'd3'
 Strategy = require './lib/strategy'
-TuningWatcher = require './lib/tuningwatcher'
-ConfigError = require './lib/configerror'
+TuningWatcher = require './lib/tuning_watcher'
 
+#
+# # Tuner
+# 
 module.exports = class Tuner
+  #
+  # ## The constructor
+  #
+  # * opt: configuration
+  # * opt.command:function: command executed in each trial.
+  # This function takes as arguments, env, params, next. next must be executed on the end of trial with the cost of this trial. 
+  #
+  # ```
+  # command = function(env, params, next){
+  #   // do procedures
+  #   next(err, cost)
+  # }
+  # ```
+  # 
+  # * opt.params:object:
+  #
+  # ```
+  # params = {
+  #   alpha: {
+  #     range: [0, 1]
+  #   },
+  #   beta: {
+  #     enum: ["foo", "bar", "bra"]
+  #   },
+  # }
+  # ```
+  # 
+  # * opt.done:function:
+  # * opt.prepare:function:
+  # * opt.env:function: you can specify environment of all of / each trials. For example port, user, password. And you can use closure
+  # 
+  # ```
+  # env = function(){
+  #   var port = 2222;
+  #   return function(){
+  #     return {
+  #       port: port++
+  #     };
+  #   }
+  # }
+  # ```
+  # 
+  # * opt.strategy:Strategy:
+  # * opt.trace:boolean:
+  # * opt.targetCost:number:
+  # * opt.maxTrialCount:number: 
+  # 
   constructor: (opt= {})->
-    # check setting
     if not opt.command? or typeof opt.command isnt 'function'
-      throw new ConfigError('command required and it must be function.')
+      throw new Error('command required and it must be function.')
 
-    # methods
+    if not opt.params? or typeof opt.params isnt 'object'
+      throw new Error('params required')
+
+    @configure(opt)
+
+  #
+  # ## Parse configuration
+  # 
+  configure: (opt)->
     @command = opt.command
-    @done = if opt.done? and typeof opt.done is 'function' then opt.done else @done
-    @env = if opt.env? and typeof opt.env is 'function' and typeof opt.env() is 'function' then opt.env() else ()-> {}
-    @before = if opt.before? and typeof opt.before is 'function' then opt.before else (next)-> next(null, {})
+    if opt.done? and typeof opt.done is 'function'
+      @done = opt.done
+      
+    if opt.env? and typeof opt.env is 'function' and typeof opt.env() is 'function'
+      @env = opt.env()
+    else
+      @env = ()-> {}
+      
+    if opt.prepare? and typeof opt.prepare is 'function'
+      @prepare = opt.prepare
+    else
+      @prepare = (next)-> next(null, {})
 
-    # values
     @trace = opt.trace or false
     @params = opt.params or {}
     @maxTrialCount = opt.maxTrialCount or 10
     @targetCost = opt.targetCost or 0.1
 
-    # strategy
-    @strategy = new Strategy.RandomStrategy(@params)
-    if opt.strategy instanceof Strategy
-      @strategy = opt.strategy
-    else if typeof opt.strategy is 'string' and Strategy[opt.strategy]?
-      new Strategy[opt.strategy](@params)
+    availableStrategies = Strategy.getAvailableStrategies()
+    if availableStrategies[opt.strategy]?
+      @strategy = new availableStrategies[opt.strategy](opt.params)
+    else
+      @strategy = new availableStrategies['greedy'](opt.params)
 
+    if not @strategy instanceof Strategy
+      throw Error("unavailable strategy (#{opt.strategy})\n now availables Strategies are #{(key for key of availableStrategies).join('\n')}")
+
+  #
+  # ## Start tuning
+  # 
   start: ()->
     beginTime = new Date()
     trialCount = 0
     
-    # localise
-    done = @done
-    env = @env
-    command = @command
-    strategy = @strategy
-    trace = @trace
-    isEndOfTrial = @isEndOfTrial
-
-
-    # watcher start
-    watcher = new TuningWatcher(@maxTrialCount, @targetCost, (err, iterationData)->
+    watcher = new TuningWatcher(@maxTrialCount, @targetCost, (err, iterationData)=>
       if err?
-        return done(err)
+        return @done(err)
       if not iterationData?
-        return done Error('no iteration data')
+        return @done Error('no iteration data')
       
       bestCost = Infinity
       bestParams = null
 
       for iteration in iterationData
-        if iteration.cost < bestCost
-          bestCost = iteration.cost
+        iteration.cost = cost = Number(iteration.cost) or parseInt iteration.cost
+        if cost < bestCost
+          bestCost = cost
           bestParams = iteration.params
       
-      done(err, {best: {cost: bestCost, params: bestParams}, iteration: iterationData}, {begin: beginTime, end: new Date()})
+      @done(err
+        {best: {cost: bestCost, params: bestParams}, iteration: iterationData}
+        {begin: beginTime, end: new Date()})
     )
     
-    # before
-    @before (err, topic)=>
-
+    @prepare (err, topic)=>
       if err?
         return watcher.emit 'error', err
 
-      # trial command
       trial = (params)=>
-        _env = env()
+        _env = @env()
         _env.$topic = topic
         _env.$trialCount = trialCount
 
-        command _env, params, (err, cost)=>
+        @command _env, params, (err, cost)=>
           if err?
             return watcher.emit 'error', err
           watcher.emit 'data', params, cost
           if @isEndOfTrial(trialCount++, cost)
             watcher.emit 'end'
           else
-            trial(strategy.getParamSet(cost))
+            trial(@strategy.getParamSet(cost))
         
-      trial(strategy.getParamSet())
+      trial(@strategy.getParamSet())
 
+  #
+  # ## check end of trial
+  #
+  # There are two cases on the condition of finishing tuning.
+  # The one is the trial count and max trial count.
+  # The other is the cost below the target cost.
+  # 
   isEndOfTrial: (trialCount, cost)->
     if trialCount > @maxTrialCount or cost < @targetCost
       return true
     false
 
+  #
+  # ## default done function
+  # 
   done: (err, results, time)->
     bestCase = null
     bestCost = Infinity

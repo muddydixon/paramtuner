@@ -1,0 +1,68 @@
+#!/usr/bin/env node
+
+var program = require('commander');
+var util = require('util');
+var fs = require('fs');
+var path = require('path');
+var exec = require('child_process').exec;
+
+var Tuner = require(path.join(__dirname, '../tuner'));
+var config = require('../package.json');
+
+var cwd = process.cwd();
+
+program
+  .version(config.version)
+  .option('-p, --plan <path>', 'plan json file path', String)
+  .option('-s, --strategy <path>', 'strategy directory', String)
+  .parse(process.argv);
+
+if(program.plan && fs.existsSync(path.join(cwd, program.plan))){
+  var plan = JSON.parse(fs.readFileSync(path.join(cwd, program.plan), 'utf8'));
+}else{
+  program.help();
+  process.exit();
+}
+
+//
+// configure command 
+//
+if(/\.js$/.test(plan.command) &&
+   fs.existsSync(path.join(cwd, plan.command))){
+  plan.command = require(path.join(cwd, plan.command));
+}else{
+  var command = plan.command;
+  plan.command = function(env, params, callback){
+    exec(command, callback);
+  };
+}
+
+//
+// configure done
+//
+// If plan.report is specified tuner write down the results to the json file
+//
+var report = console.log;
+var format = function(msg){ return JSON.stringify(msg, null, 10); };
+
+if(plan.report){
+  var filename = plan.report;
+  if(typeof plan.report === 'object' && plan.report.filename){
+    filename = plan.report.filename;
+  }
+  report = function(msg){
+    fs.writeFileSync(filename, msg);
+  };
+}
+
+plan.done = plan.done || function(env, results, time){
+  report(format({time: time, results: results}));
+  process.exit(0);
+};
+
+var tuner = new Tuner(plan);
+tuner.start();
+
+
+
+

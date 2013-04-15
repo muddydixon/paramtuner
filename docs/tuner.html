@@ -1,0 +1,150 @@
+<!DOCTYPE html>  <html> <head>   <title>tuner.coffee</title>   <meta http-equiv="content-type" content="text/html; charset=UTF-8">   <link rel="stylesheet" media="all" href="docco.css" /> </head> <body>   <div id="container">     <div id="background"></div>            <div id="jump_to">         Jump To &hellip;         <div id="jump_wrapper">           <div id="jump_page">                                           <a class="source" href="index.html">                 index.coffee               </a>                                           <a class="source" href="strategy.html">                 strategy.coffee               </a>                                           <a class="source" href="generalized_linear_strategy.html">                 generalized_linear_strategy.coffee               </a>                                           <a class="source" href="greedy_strategy.html">                 greedy_strategy.coffee               </a>                                           <a class="source" href="tuning_watcher.html">                 tuning_watcher.coffee               </a>                                           <a class="source" href="tuner.html">                 tuner.coffee               </a>                        </div>         </div>       </div>          <table cellpadding="0" cellspacing="0">       <thead>         <tr>           <th class="docs">             <h1>               tuner.coffee             </h1>           </th>           <th class="code">           </th>         </tr>       </thead>       <tbody>                               <tr id="section-1">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-1">&#182;</a>               </div>                            </td>             <td class="code">               <div class="highlight"><pre><span class="nv">d3 = </span><span class="nx">require</span> <span class="s">&#39;d3&#39;</span>
+<span class="nv">Strategy = </span><span class="nx">require</span> <span class="s">&#39;./lib/strategy&#39;</span>
+<span class="nv">TuningWatcher = </span><span class="nx">require</span> <span class="s">&#39;./lib/tuning_watcher&#39;</span></pre></div>             </td>           </tr>                               <tr id="section-2">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-2">&#182;</a>               </div>               <h1>Tuner</h1>             </td>             <td class="code">               <div class="highlight"><pre><span class="nv">module.exports = </span><span class="k">class</span> <span class="nx">Tuner</span></pre></div>             </td>           </tr>                               <tr id="section-3">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-3">&#182;</a>               </div>               <h2>The constructor</h2>
+
+<ul>
+<li>opt: configuration</li>
+<li>opt.command:function: command executed in each trial.
+This function takes as arguments, env, params, next. next must be executed on the end of trial with the cost of this trial. </li>
+</ul>
+
+<p><code>
+command = function(env, params, next){
+  // do procedures
+  next(err, cost)
+}
+</code></p>
+
+<ul>
+<li>opt.params:object:</li>
+</ul>
+
+<p><code>
+params = {
+  alpha: {
+    range: [0, 1]
+  },
+  beta: {
+    enum: ["foo", "bar", "bra"]
+  },
+}
+</code></p>
+
+<ul>
+<li>opt.done:function:</li>
+<li>opt.prepare:function:</li>
+<li>opt.env:function: you can specify environment of all of / each trials. For example port, user, password. And you can use closure</li>
+</ul>
+
+<p><code>
+env = function(){
+  var port = 2222;
+  return function(){
+    return {
+      port: port++
+    };
+  }
+}
+</code></p>
+
+<ul>
+<li>opt.strategy:Strategy:</li>
+<li>opt.trace:boolean:</li>
+<li>opt.targetCost:number:</li>
+<li>opt.maxTrialCount:number: </li>
+</ul>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nv">constructor: </span><span class="nf">(opt= {})-&gt;</span>
+    <span class="k">if</span> <span class="o">not</span> <span class="nx">opt</span><span class="p">.</span><span class="nx">command</span><span class="o">?</span> <span class="o">or</span> <span class="k">typeof</span> <span class="nx">opt</span><span class="p">.</span><span class="nx">command</span> <span class="o">isnt</span> <span class="s">&#39;function&#39;</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span><span class="p">(</span><span class="s">&#39;command required and it must be function.&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="o">not</span> <span class="nx">opt</span><span class="p">.</span><span class="nx">params</span><span class="o">?</span> <span class="o">or</span> <span class="k">typeof</span> <span class="nx">opt</span><span class="p">.</span><span class="nx">params</span> <span class="o">isnt</span> <span class="s">&#39;object&#39;</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span><span class="p">(</span><span class="s">&#39;params required&#39;</span><span class="p">)</span>
+
+    <span class="nx">@configure</span><span class="p">(</span><span class="nx">opt</span><span class="p">)</span></pre></div>             </td>           </tr>                               <tr id="section-4">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-4">&#182;</a>               </div>               <h2>Parse configuration</h2>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nv">configure: </span><span class="nf">(opt)-&gt;</span>
+    <span class="vi">@command = </span><span class="nx">opt</span><span class="p">.</span><span class="nx">command</span>
+    <span class="k">if</span> <span class="nx">opt</span><span class="p">.</span><span class="nx">done</span><span class="o">?</span> <span class="o">and</span> <span class="k">typeof</span> <span class="nx">opt</span><span class="p">.</span><span class="nx">done</span> <span class="o">is</span> <span class="s">&#39;function&#39;</span>
+      <span class="vi">@done = </span><span class="nx">opt</span><span class="p">.</span><span class="nx">done</span>
+      
+    <span class="k">if</span> <span class="nx">opt</span><span class="p">.</span><span class="nx">env</span><span class="o">?</span> <span class="o">and</span> <span class="k">typeof</span> <span class="nx">opt</span><span class="p">.</span><span class="nx">env</span> <span class="o">is</span> <span class="s">&#39;function&#39;</span> <span class="o">and</span> <span class="k">typeof</span> <span class="nx">opt</span><span class="p">.</span><span class="nx">env</span><span class="p">()</span> <span class="o">is</span> <span class="s">&#39;function&#39;</span>
+      <span class="vi">@env = </span><span class="nx">opt</span><span class="p">.</span><span class="nx">env</span><span class="p">()</span>
+    <span class="k">else</span>
+      <span class="vi">@env = </span><span class="p">()</span><span class="nf">-&gt;</span> <span class="p">{}</span>
+      
+    <span class="k">if</span> <span class="nx">opt</span><span class="p">.</span><span class="nx">prepare</span><span class="o">?</span> <span class="o">and</span> <span class="k">typeof</span> <span class="nx">opt</span><span class="p">.</span><span class="nx">prepare</span> <span class="o">is</span> <span class="s">&#39;function&#39;</span>
+      <span class="vi">@prepare = </span><span class="nx">opt</span><span class="p">.</span><span class="nx">prepare</span>
+    <span class="k">else</span>
+      <span class="vi">@prepare = </span><span class="nf">(next)-&gt;</span> <span class="nx">next</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="p">{})</span>
+
+    <span class="vi">@trace = </span><span class="nx">opt</span><span class="p">.</span><span class="nx">trace</span> <span class="o">or</span> <span class="kc">false</span>
+    <span class="vi">@params = </span><span class="nx">opt</span><span class="p">.</span><span class="nx">params</span> <span class="o">or</span> <span class="p">{}</span>
+    <span class="vi">@maxTrialCount = </span><span class="nx">opt</span><span class="p">.</span><span class="nx">maxTrialCount</span> <span class="o">or</span> <span class="mi">10</span>
+    <span class="vi">@targetCost = </span><span class="nx">opt</span><span class="p">.</span><span class="nx">targetCost</span> <span class="o">or</span> <span class="mf">0.1</span>
+
+    <span class="nv">availableStrategies = </span><span class="nx">Strategy</span><span class="p">.</span><span class="nx">getAvailableStrategies</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nx">availableStrategies</span><span class="p">[</span><span class="nx">opt</span><span class="p">.</span><span class="nx">strategy</span><span class="p">]</span><span class="o">?</span>
+      <span class="vi">@strategy = </span><span class="k">new</span> <span class="nx">availableStrategies</span><span class="p">[</span><span class="nx">opt</span><span class="p">.</span><span class="nx">strategy</span><span class="p">](</span><span class="nx">opt</span><span class="p">.</span><span class="nx">params</span><span class="p">)</span>
+    <span class="k">else</span>
+      <span class="vi">@strategy = </span><span class="k">new</span> <span class="nx">availableStrategies</span><span class="p">[</span><span class="s">&#39;greedy&#39;</span><span class="p">](</span><span class="nx">opt</span><span class="p">.</span><span class="nx">params</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="o">not</span> <span class="nx">@strategy</span> <span class="k">instanceof</span> <span class="nx">Strategy</span>
+      <span class="k">throw</span> <span class="nb">Error</span><span class="p">(</span><span class="s">&quot;unavailable strategy (</span><span class="si">#{</span><span class="nx">opt</span><span class="p">.</span><span class="nx">strategy</span><span class="si">}</span><span class="s">)\n now availables Strategies are </span><span class="si">#{</span><span class="p">(</span><span class="nx">key</span> <span class="k">for</span> <span class="nx">key</span> <span class="k">of</span> <span class="nx">availableStrategies</span><span class="p">).</span><span class="nx">join</span><span class="p">(</span><span class="s">&#39;\n&#39;</span><span class="p">)</span><span class="si">}</span><span class="s">&quot;</span><span class="p">)</span></pre></div>             </td>           </tr>                               <tr id="section-5">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-5">&#182;</a>               </div>               <h2>Start tuning</h2>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nv">start: </span><span class="p">()</span><span class="nf">-&gt;</span>
+    <span class="nv">beginTime = </span><span class="k">new</span> <span class="nb">Date</span><span class="p">()</span>
+    <span class="nv">trialCount = </span><span class="mi">0</span>
+    
+    <span class="nv">watcher = </span><span class="k">new</span> <span class="nx">TuningWatcher</span><span class="p">(</span><span class="nx">@maxTrialCount</span><span class="p">,</span> <span class="nx">@targetCost</span><span class="p">,</span> <span class="nf">(err, iterationData)=&gt;</span>
+      <span class="k">if</span> <span class="nx">err</span><span class="o">?</span>
+        <span class="k">return</span> <span class="nx">@done</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+      <span class="k">if</span> <span class="o">not</span> <span class="nx">iterationData</span><span class="o">?</span>
+        <span class="k">return</span> <span class="nx">@done</span> <span class="nb">Error</span><span class="p">(</span><span class="s">&#39;no iteration data&#39;</span><span class="p">)</span>
+      
+      <span class="nv">bestCost = </span><span class="kc">Infinity</span>
+      <span class="nv">bestParams = </span><span class="kc">null</span>
+
+      <span class="k">for</span> <span class="nx">iteration</span> <span class="k">in</span> <span class="nx">iterationData</span>
+        <span class="nv">iteration.cost = cost = </span><span class="nb">Number</span><span class="p">(</span><span class="nx">iteration</span><span class="p">.</span><span class="nx">cost</span><span class="p">)</span> <span class="o">or</span> <span class="nb">parseInt</span> <span class="nx">iteration</span><span class="p">.</span><span class="nx">cost</span>
+        <span class="k">if</span> <span class="nx">cost</span> <span class="o">&lt;</span> <span class="nx">bestCost</span>
+          <span class="nv">bestCost = </span><span class="nx">cost</span>
+          <span class="nv">bestParams = </span><span class="nx">iteration</span><span class="p">.</span><span class="nx">params</span>
+      
+      <span class="nx">@done</span><span class="p">(</span><span class="nx">err</span>
+        <span class="p">{</span><span class="nv">best: </span><span class="p">{</span><span class="nv">cost: </span><span class="nx">bestCost</span><span class="p">,</span> <span class="nv">params: </span><span class="nx">bestParams</span><span class="p">},</span> <span class="nv">iteration: </span><span class="nx">iterationData</span><span class="p">}</span>
+        <span class="p">{</span><span class="nv">begin: </span><span class="nx">beginTime</span><span class="p">,</span> <span class="nv">end: </span><span class="k">new</span> <span class="nb">Date</span><span class="p">()})</span>
+    <span class="p">)</span>
+    
+    <span class="nx">@prepare</span> <span class="nf">(err, topic)=&gt;</span>
+      <span class="k">if</span> <span class="nx">err</span><span class="o">?</span>
+        <span class="k">return</span> <span class="nx">watcher</span><span class="p">.</span><span class="nx">emit</span> <span class="s">&#39;error&#39;</span><span class="p">,</span> <span class="nx">err</span>
+
+      <span class="nv">trial = </span><span class="nf">(params)=&gt;</span>
+        <span class="nv">_env = </span><span class="nx">@env</span><span class="p">()</span>
+        <span class="nv">_env.$topic = </span><span class="nx">topic</span>
+        <span class="nv">_env.$trialCount = </span><span class="nx">trialCount</span>
+
+        <span class="nx">@command</span> <span class="nx">_env</span><span class="p">,</span> <span class="nx">params</span><span class="p">,</span> <span class="nf">(err, cost)=&gt;</span>
+          <span class="k">if</span> <span class="nx">err</span><span class="o">?</span>
+            <span class="k">return</span> <span class="nx">watcher</span><span class="p">.</span><span class="nx">emit</span> <span class="s">&#39;error&#39;</span><span class="p">,</span> <span class="nx">err</span>
+          <span class="nx">watcher</span><span class="p">.</span><span class="nx">emit</span> <span class="s">&#39;data&#39;</span><span class="p">,</span> <span class="nx">params</span><span class="p">,</span> <span class="nx">cost</span>
+          <span class="k">if</span> <span class="nx">@isEndOfTrial</span><span class="p">(</span><span class="nx">trialCount</span><span class="o">++</span><span class="p">,</span> <span class="nx">cost</span><span class="p">)</span>
+            <span class="nx">watcher</span><span class="p">.</span><span class="nx">emit</span> <span class="s">&#39;end&#39;</span>
+          <span class="k">else</span>
+            <span class="nx">trial</span><span class="p">(</span><span class="nx">@strategy</span><span class="p">.</span><span class="nx">getParamSet</span><span class="p">(</span><span class="nx">cost</span><span class="p">))</span>
+        
+      <span class="nx">trial</span><span class="p">(</span><span class="nx">@strategy</span><span class="p">.</span><span class="nx">getParamSet</span><span class="p">())</span></pre></div>             </td>           </tr>                               <tr id="section-6">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-6">&#182;</a>               </div>               <h2>check end of trial</h2>
+
+<p>There are two cases on the condition of finishing tuning.
+The one is the trial count and max trial count.
+The other is the cost below the target cost.</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nv">isEndOfTrial: </span><span class="nf">(trialCount, cost)-&gt;</span>
+    <span class="k">if</span> <span class="nx">trialCount</span> <span class="o">&gt;</span> <span class="nx">@maxTrialCount</span> <span class="o">or</span> <span class="nx">cost</span> <span class="o">&lt;</span> <span class="nx">@targetCost</span>
+      <span class="k">return</span> <span class="kc">true</span>
+    <span class="kc">false</span></pre></div>             </td>           </tr>                               <tr id="section-7">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-7">&#182;</a>               </div>               <h2>default done function</h2>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nv">done: </span><span class="nf">(err, results, time)-&gt;</span>
+    <span class="nv">bestCase = </span><span class="kc">null</span>
+    <span class="nv">bestCost = </span><span class="kc">Infinity</span>
+    <span class="k">for</span> <span class="nx">result</span> <span class="k">in</span> <span class="nx">results</span>
+      <span class="k">if</span> <span class="nx">result</span><span class="p">.</span><span class="nx">cost</span> <span class="o">&lt;</span> <span class="nx">bestCost</span>
+        <span class="nv">bestCost = </span><span class="nx">result</span><span class="p">.</span><span class="nx">cost</span>
+        <span class="nv">bestCase = </span><span class="nx">result</span>
+    
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span> <span class="s">&quot;tuning: </span><span class="si">#{</span><span class="nx">results</span><span class="p">.</span><span class="nx">length</span><span class="si">}</span><span class="s"> cases, time: </span><span class="si">#{</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">end</span> <span class="o">-</span> <span class="nx">time</span><span class="p">.</span><span class="nx">begin</span><span class="p">)</span> <span class="o">/</span> <span class="mi">1000</span><span class="si">}</span><span class="s"> sec&quot;</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span> <span class="s">&quot;\tbest score: </span><span class="si">#{</span><span class="nx">bestCase</span><span class="p">.</span><span class="nx">cost</span><span class="si">}</span><span class="s">&quot;</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span> <span class="s">&quot;\ton: </span><span class="si">#{</span><span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">bestCase</span><span class="p">.</span><span class="nx">params</span><span class="p">)</span><span class="si">}</span><span class="s">&quot;</span>
+
+</pre></div>             </td>           </tr>                </tbody>     </table>   </div> </body> </html> 

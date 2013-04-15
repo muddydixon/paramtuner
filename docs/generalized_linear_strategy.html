@@ -1,0 +1,54 @@
+<!DOCTYPE html>  <html> <head>   <title>generalized_linear_strategy.coffee</title>   <meta http-equiv="content-type" content="text/html; charset=UTF-8">   <link rel="stylesheet" media="all" href="docco.css" /> </head> <body>   <div id="container">     <div id="background"></div>            <div id="jump_to">         Jump To &hellip;         <div id="jump_wrapper">           <div id="jump_page">                                           <a class="source" href="index.html">                 index.coffee               </a>                                           <a class="source" href="strategy.html">                 strategy.coffee               </a>                                           <a class="source" href="generalized_linear_strategy.html">                 generalized_linear_strategy.coffee               </a>                                           <a class="source" href="greedy_strategy.html">                 greedy_strategy.coffee               </a>                                           <a class="source" href="tuning_watcher.html">                 tuning_watcher.coffee               </a>                                           <a class="source" href="tuner.html">                 tuner.coffee               </a>                        </div>         </div>       </div>          <table cellpadding="0" cellspacing="0">       <thead>         <tr>           <th class="docs">             <h1>               generalized_linear_strategy.coffee             </h1>           </th>           <th class="code">           </th>         </tr>       </thead>       <tbody>                               <tr id="section-1">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-1">&#182;</a>               </div>                            </td>             <td class="code">               <div class="highlight"><pre><span class="nv">d3 = </span><span class="nx">require</span> <span class="s">&#39;d3&#39;</span></pre></div>             </td>           </tr>                               <tr id="section-2">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-2">&#182;</a>               </div>               <p>GeneralizedLinearStrategy</p>
+
+<p>This is Generalized Linear Strategy.</p>
+
+<p>At first it create a list of sample points,
+it generates model from results and exploration.</p>
+
+<p>And then it explores to the point to local minimal value.</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nv">module.exports = </span><span class="k">class</span> <span class="nx">GeneralizedLinearStrategy</span> <span class="k">extends</span> <span class="nx">require</span> <span class="s">&#39;../strategy&#39;</span>
+  <span class="nv">constructor: </span><span class="nf">(params, grid)-&gt;</span>
+    <span class="nv">grid = </span><span class="nx">grid</span> <span class="o">or</span> <span class="mi">3</span>
+    <span class="k">super</span><span class="p">(</span><span class="nx">params</span><span class="p">)</span>
+
+    <span class="vi">@initialiSet = </span><span class="p">[]</span>
+    <span class="vi">@results = </span><span class="p">[]</span>
+
+    <span class="nv">_params = </span><span class="p">{}</span>
+    <span class="k">for</span> <span class="nx">key</span><span class="p">,</span> <span class="nx">val</span> <span class="k">of</span> <span class="nx">@params</span>
+      <span class="nx">_params</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">..</span><span class="nx">grid</span> <span class="o">-</span> <span class="mi">1</span><span class="p">].</span><span class="nx">map</span> <span class="nf">(d)-&gt;</span> <span class="nx">val</span> <span class="nx">d</span> <span class="o">/</span> <span class="p">(</span><span class="nx">grid</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="nv">prods = </span><span class="p">{}</span>
+    <span class="nv">prod = </span><span class="mi">1</span>
+    <span class="k">for</span> <span class="nx">param</span><span class="p">,</span> <span class="nx">idx</span> <span class="k">in</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">entries</span><span class="p">(</span><span class="nx">_params</span><span class="p">)</span>
+      <span class="nx">prods</span><span class="p">[</span><span class="nx">param</span><span class="p">.</span><span class="nx">key</span><span class="p">]</span> <span class="o">=</span> <span class="nx">prod</span>
+      <span class="nx">prod</span> <span class="o">*=</span> <span class="nx">param</span><span class="p">.</span><span class="nx">value</span><span class="p">.</span><span class="nx">length</span>
+
+    <span class="k">for</span> <span class="nx">i</span> <span class="k">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">..</span><span class="nx">prod</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+      <span class="nx">@initialiSet</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+      <span class="k">for</span> <span class="nx">key</span><span class="p">,</span> <span class="nx">val</span> <span class="k">of</span> <span class="nx">_params</span>
+        <span class="nx">@initialiSet</span><span class="p">[</span><span class="nx">i</span><span class="p">][</span><span class="nx">key</span><span class="p">]</span> <span class="o">=</span> <span class="nx">val</span><span class="p">[(</span><span class="mi">0</span><span class="o">|</span><span class="nx">i</span> <span class="o">/</span> <span class="nx">prods</span><span class="p">[</span><span class="nx">key</span><span class="p">])</span> <span class="o">%</span> <span class="nx">val</span><span class="p">.</span><span class="nx">length</span><span class="p">]</span>
+    <span class="vi">@prod = </span><span class="nx">prod</span>
+
+  <span class="nv">getParamSet: </span><span class="nf">(cost)-&gt;</span>
+    <span class="k">super</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nx">cost</span><span class="o">?</span>
+      <span class="nx">@results</span><span class="p">.</span><span class="nx">push</span> <span class="nx">cost</span>
+      
+    <span class="k">if</span> <span class="nx">@t</span> <span class="o">&gt;=</span> <span class="nx">@prod</span>
+      <span class="k">if</span> <span class="nx">@t</span> <span class="o">is</span> <span class="nx">@prod</span>
+        <span class="nx">@generateGLModel</span><span class="p">()</span>
+      <span class="p">{}</span>
+    <span class="k">else</span>
+      <span class="nv">params = </span><span class="nx">@initialiSet</span><span class="p">[</span><span class="nx">@t</span><span class="p">]</span>
+      
+  <span class="nv">generateGLModel: </span><span class="p">()</span><span class="nf">-&gt;</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span> <span class="s">&#39;when generalized&#39;</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-3">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-3">&#182;</a>               </div>               <p>parameter initialize</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">theta = </span><span class="p">{}</span>
+    <span class="k">for</span> <span class="nx">key</span> <span class="k">of</span> <span class="nx">@params</span>
+      <span class="nx">theta</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">random</span><span class="p">()</span> <span class="o">-</span> <span class="mf">0.5</span></pre></div>             </td>           </tr>                               <tr id="section-4">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-4">&#182;</a>               </div>               <p>calculate cost</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nv">cost = </span><span class="nx">@calculateCost</span><span class="p">(</span><span class="nx">theta</span><span class="p">)</span></pre></div>             </td>           </tr>                               <tr id="section-5">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-5">&#182;</a>               </div>               <p>TODO: ここから最尤推定を行うロジック</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nv">calculateCost: </span><span class="nf">(theta)-&gt;</span>
+    <span class="nv">costs = </span><span class="p">[]</span>
+    <span class="k">for</span> <span class="nx">set</span><span class="p">,</span> <span class="nx">idx</span> <span class="k">in</span> <span class="nx">@initialiSet</span>
+      <span class="nx">costs</span><span class="p">.</span><span class="nx">push</span> <span class="nx">@results</span><span class="p">[</span><span class="nx">idx</span><span class="p">]</span> <span class="o">-</span> <span class="nx">d3</span><span class="p">.</span><span class="nx">sum</span> <span class="p">(</span><span class="nx">val</span> <span class="o">*</span> <span class="nx">theta</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span> <span class="k">for</span> <span class="nx">key</span><span class="p">,</span> <span class="nx">val</span> <span class="k">of</span> <span class="nx">set</span><span class="p">)</span>
+    <span class="nx">d3</span><span class="p">.</span><span class="nx">sum</span> <span class="nx">costs</span>
+
+</pre></div>             </td>           </tr>                </tbody>     </table>   </div> </body> </html> 
