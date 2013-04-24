@@ -7,14 +7,15 @@ Strategy = require('./lib/strategy');
 TuningWatcher = require('./lib/tuning_watcher');
 
 module.exports = Tuner = (function() {
+
   function Tuner(opt) {
     if (opt == null) {
       opt = {};
     }
-    if ((opt.command == null) || typeof opt.command !== 'function') {
+    if (!(opt.command != null) || typeof opt.command !== 'function') {
       throw new Error('command required and it must be function.');
     }
-    if ((opt.params == null) || typeof opt.params !== 'object') {
+    if (!(opt.params != null) || typeof opt.params !== 'object') {
       throw new Error('params required');
     }
     this.configure(opt);
@@ -22,7 +23,6 @@ module.exports = Tuner = (function() {
 
   Tuner.prototype.configure = function(opt) {
     var availableStrategies, key;
-
     this.command = opt.command;
     if ((opt.done != null) && typeof opt.done === 'function') {
       this.done = opt.done;
@@ -54,7 +54,6 @@ module.exports = Tuner = (function() {
     if (!this.strategy instanceof Strategy) {
       throw Error("unavailable strategy (" + opt.strategy + ")\n now availables Strategies are " + (((function() {
         var _results;
-
         _results = [];
         for (key in availableStrategies) {
           _results.push(key);
@@ -67,16 +66,14 @@ module.exports = Tuner = (function() {
   Tuner.prototype.start = function() {
     var beginTime, trialCount, watcher,
       _this = this;
-
     beginTime = new Date();
     trialCount = 0;
     watcher = new TuningWatcher(this.maxTrialCount, this.targetCost, function(err, iterationData) {
       var bestCost, bestParams, cost, iteration, _i, _len;
-
       if (err != null) {
         return _this.done(err);
       }
-      if (iterationData == null) {
+      if (!(iterationData != null)) {
         return _this.done(Error('no iteration data'));
       }
       bestCost = Infinity;
@@ -102,13 +99,11 @@ module.exports = Tuner = (function() {
     });
     return this.prepare(function(err, topic) {
       var trial;
-
       if (err != null) {
         return watcher.emit('error', err);
       }
       trial = function(params) {
         var _env;
-
         _env = _this.env();
         _env.$topic = topic;
         _env.$trialCount = trialCount;
@@ -137,7 +132,6 @@ module.exports = Tuner = (function() {
 
   Tuner.prototype.done = function(err, results, time) {
     var bestCase, bestCost, result, _i, _len;
-
     bestCase = null;
     bestCost = Infinity;
     for (_i = 0, _len = results.length; _i < _len; _i++) {

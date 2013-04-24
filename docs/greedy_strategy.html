@@ -2,7 +2,7 @@
 
 <p>This is greedy strategy.</p>
 
-<p>It explores parameter space randamly.</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nv">module.exports = </span><span class="k">class</span> <span class="nx">GreedyStrategy</span> <span class="k">extends</span> <span class="nx">require</span> <span class="s">&#39;../strategy&#39;</span>
+<p>It explores parameter space randamly.</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nv">module.exports = </span><span class="k">class</span> <span class="nx">GreedyStrategy</span> <span class="k">extends</span> <span class="nx">require</span><span class="p">(</span><span class="s">&#39;../strategy&#39;</span><span class="p">)</span>
   <span class="nv">getParamSet: </span><span class="p">()</span><span class="nf">-&gt;</span>
     <span class="nv">param = </span><span class="p">{}</span>
     <span class="k">for</span> <span class="nx">key</span><span class="p">,</span> <span class="nx">val</span> <span class="k">of</span> <span class="nx">@params</span>

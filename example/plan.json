@@ -7,6 +7,6 @@
     "command": "echo $RANDOM",
     "report": {
         "type": "json",
-        "filename": "./example/report.json"
+        "filename": "./report.json"
     }    
 }

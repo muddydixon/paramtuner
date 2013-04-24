@@ -5,7 +5,7 @@
 <p>At first it create a list of sample points,
 it generates model from results and exploration.</p>
 
-<p>And then it explores to the point to local minimal value.</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nv">module.exports = </span><span class="k">class</span> <span class="nx">GeneralizedLinearStrategy</span> <span class="k">extends</span> <span class="nx">require</span> <span class="s">&#39;../strategy&#39;</span>
+<p>And then it explores to the point to local minimal value.</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nv">module.exports = </span><span class="k">class</span> <span class="nx">GeneralizedLinearStrategy</span> <span class="k">extends</span> <span class="nx">require</span><span class="p">(</span><span class="s">&#39;../strategy&#39;</span><span class="p">)</span>
   <span class="nv">constructor: </span><span class="nf">(params, grid)-&gt;</span>
     <span class="nv">grid = </span><span class="nx">grid</span> <span class="o">or</span> <span class="mi">3</span>
     <span class="k">super</span><span class="p">(</span><span class="nx">params</span><span class="p">)</span>

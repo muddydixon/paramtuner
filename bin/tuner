@@ -17,7 +17,8 @@ program
   .option('-s, --strategy <path>', 'strategy directory', String)
   .parse(process.argv);
 
-if(program.plan && fs.existsSync(path.join(cwd, program.plan))){
+var planPath = path.join(cwd, program.plan);
+if(program.plan && fs.existsSync(planPath)){
   var plan = JSON.parse(fs.readFileSync(path.join(cwd, program.plan), 'utf8'));
 }else{
   program.help();
@@ -28,8 +29,8 @@ if(program.plan && fs.existsSync(path.join(cwd, program.plan))){
 // configure command 
 //
 if(/\.js$/.test(plan.command) &&
-   fs.existsSync(path.join(cwd, plan.command))){
-  plan.command = require(path.join(cwd, plan.command));
+   fs.existsSync(path.join(path.dirname(planPath), plan.command))){
+  plan.command = require(path.join(path.dirname(planPath), plan.command));
 }else{
   var command = plan.command;
   plan.command = function(env, params, callback){
@@ -43,12 +44,12 @@ if(/\.js$/.test(plan.command) &&
 // If plan.report is specified tuner write down the results to the json file
 //
 var report = console.log;
-var format = function(msg){ return JSON.stringify(msg, null, 10); };
+var format = function(msg){ return JSON.stringify(msg, null, 2); };
 
 if(plan.report){
-  var filename = plan.report;
+  var filename = path.join(path.dirname(planPath), plan.report);
   if(typeof plan.report === 'object' && plan.report.filename){
-    filename = plan.report.filename;
+    filename = path.join(path.dirname(planPath), plan.report.filename);
   }
   report = function(msg){
     fs.writeFileSync(filename, msg);
