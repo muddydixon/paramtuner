@@ -9,7 +9,7 @@ d3 = require 'd3'
 #
 # And then it explores to the point to local minimal value.
 #
-module.exports = class GeneralizedLinearStrategy extends require '../strategy'
+module.exports = class GeneralizedLinearStrategy extends require('../strategy')
   constructor: (params, grid)->
     grid = grid or 3
     super(params)

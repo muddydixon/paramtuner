@@ -1,9 +1,9 @@
 {
     "params": {
         "alpha": {
-            "range": [0, 1]
+            "range": [1, 10]
         }
     },
-    "command": "./example/command.js",
-    "report": "./example/report.json"
+    "command": "./command.js",
+    "report": "./report.json"
 }

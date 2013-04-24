@@ -5,7 +5,7 @@
 #
 # It explores parameter space randamly.
 #
-module.exports = class GreedyStrategy extends require '../strategy'
+module.exports = class GreedyStrategy extends require('../strategy')
   getParamSet: ()->
     param = {}
     for key, val of @params
